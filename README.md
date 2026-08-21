@@ -18,6 +18,13 @@ foreach (var plugin in manager.GetPlugins<ICommandPlugin>())
     Console.WriteLine(await plugin.ExecuteAsync("time", args, ct));
 ```
 
+## Guides
+
+- [Building and installing a plugin](docs/plugin-authoring.md) — project setup, manifest
+  reference, capabilities, private dependencies, deployment, troubleshooting.
+- [Hosting Plugman and using plugins](docs/host-integration.md) — wiring the manager, consuming
+  capabilities, enable/disable rules, per-framework recipes, trust boundary, operations.
+
 ## Why the packages are split
 
 A single package would force a WPF reference onto a console host, or a Blazor reference onto a
@@ -106,7 +113,9 @@ including the ones a given host has to refuse.
 
 - `enabled` is the persisted state. `EnableAsync`/`DisableAsync` rewrite it, preserving every
   other property in the file — including keys Plugman knows nothing about. On startup the file
-  is the source of truth.
+  is the source of truth. If the rewrite fails (the file was deleted, the folder is read-only)
+  the plugin is still unloaded, and the failure is reported on its descriptor rather than
+  swallowed.
 - `entryType` is optional; with it omitted the manager looks for exactly one `IPlugin`
   implementation in the entry assembly.
 - `uiCapabilities` is an array, so a plugin can advertise more than one. Omit it for a pure
@@ -209,6 +218,13 @@ manager, and drop the returned `FrameworkElement` into a `TabItem`. No DataTempl
 ViewModel-first plumbing, no per-plugin host code. When disabling, remove the view from the
 visual tree *before* calling `DisableAsync`.
 
+One trap worth knowing, because it looks exactly like a plugin bug: a `TabControl` populated at
+runtime keeps `SelectedIndex` at `-1`, and an unselected tab never realizes its content. The tab
+header appears, the plugin's view is sitting in it — with `IsVisible` false and a zero size —
+and the panel renders blank. Select the tab explicitly after adding it (and after removing the
+selected one). `TabHostingTests` covers this; a `ContentControl`-based test cannot, because a
+`ContentControl` has no notion of selection.
+
 **Blazor Server** — render `GetPlugins<IBlazorUiPlugin>()` with `DynamicComponent`:
 
 ```razor
@@ -295,6 +311,12 @@ itself would keep the failing plugin alive forever.
 A malformed manifest never aborts a scan: the plugin appears in `DiscoveredPlugins` under its
 folder name with the error attached, and every other plugin loads normally.
 
+A scan also reconciles removals. A plugin that has disappeared from disk and is *not* loaded is
+dropped from the registry (`PluginState.Removed`). One that is still loaded is kept and flagged
+instead — deleting a file does not un-run the code, and silently unloading on a transient
+filesystem problem would be a worse failure than a stale row. It is dropped by the first scan
+after it is unloaded.
+
 ## API
 
 ```csharp
@@ -330,8 +352,11 @@ public sealed class PluginManager : IAsyncDisposable
 
 `PluginManagerOptions` covers the per-plugin data directory root, an explicit
 `HostUiCapabilities` list (otherwise probed from the assemblies present in the default load
-context), `AdditionalSharedAssemblies`, `AutoLoadEnabledPlugins`, and a shutdown timeout so a
-plugin that hangs its shutdown cannot hang the host.
+context), `AdditionalSharedAssemblies`, `AutoLoadEnabledPlugins`, and timeouts for
+`InitializeAsync` and `ShutdownAsync`. Both lifecycle calls are made while the manager holds its
+lock, so the timeouts are what stop a plugin that never returns from deadlocking every later
+operation: the token is cancelled, and a plugin that ignores it is abandoned rather than waited
+on. The host keeps running; that plugin's load context never collects.
 
 State-change handlers run after the manager's internal lock is released, so a handler that
 calls back into the manager — a UI refreshing itself, for instance — cannot deadlock.
