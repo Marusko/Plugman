@@ -27,6 +27,7 @@
     <Project Path="tests/Fixtures/ConflictPluginB/ConflictPluginB.csproj" />
     <Project Path="tests/Fixtures/DependentPlugin/DependentPlugin.csproj" />
     <Project Path="tests/Fixtures/GoodPlugin/GoodPlugin.csproj" />
+    <Project Path="tests/Fixtures/HangingPlugin/HangingPlugin.csproj" />
     <Project Path="tests/Fixtures/NotAPlugin/NotAPlugin.csproj" />
     <Project Path="tests/Fixtures/ThrowingPlugin/ThrowingPlugin.csproj" />
     <Project Path="tests/Fixtures/WpfCodeViewPlugin/WpfCodeViewPlugin.csproj" />

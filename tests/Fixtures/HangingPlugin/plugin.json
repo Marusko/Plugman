@@ -1,0 +1,6 @@
+{
+  "id": "fixture.hanging.init",
+  "entryAssembly": "HangingPlugin.dll",
+  "entryType": "HangingPlugin.HangingInitPlugin",
+  "enabled": true
+}

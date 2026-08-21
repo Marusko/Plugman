@@ -91,6 +91,16 @@ internal sealed class TestPluginsFolder : IDisposable
         File.WriteAllText(path, manifest.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
     }
 
+    /// <summary>
+    /// Removes just the manifest, which makes scanning skip the folder.
+    /// </summary>
+    /// <remarks>
+    /// The way to make a *loaded* plugin vanish in a test: Windows locks the assembly file
+    /// while its load context is alive, so deleting the whole folder fails with a sharing
+    /// violation. Removing the manifest exercises the same "no longer seen by a scan" path.
+    /// </remarks>
+    public void DeleteManifest(string folderName) => File.Delete(ManifestPath(folderName));
+
     public void DeleteFolder(string folderName)
     {
         var path = Path.Combine(Root, folderName);

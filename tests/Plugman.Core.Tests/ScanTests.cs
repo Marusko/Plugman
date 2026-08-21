@@ -134,6 +134,33 @@ public class ScanTests
     }
 
     [Fact]
+    public async Task A_loaded_plugin_whose_folder_disappears_is_flagged_rather_than_dropped()
+    {
+        using var folder = new TestPluginsFolder();
+        folder.AddFixture("GoodPlugin");
+
+        await using var host = new TestHost(folder);
+        await host.Manager.ScanAsync();
+        await host.Manager.LoadAsync("fixture.good");
+
+        folder.DeleteManifest("GoodPlugin");
+        await host.Manager.ScanAsync();
+
+        // Still listed: it is still running, and deleting a file does not undo that.
+        var descriptor = Assert.Single(host.Manager.DiscoveredPlugins);
+        Assert.True(descriptor.IsLoaded);
+        Assert.Equal(PluginLoadStage.Manifest, descriptor.LoadError!.Stage);
+        Assert.Contains("no longer exists", descriptor.LoadError.Message);
+
+        // Once unloaded, the next scan drops it for real.
+        await host.Manager.UnloadAsync("fixture.good");
+        await host.Manager.ScanAsync();
+
+        Assert.Empty(host.Manager.DiscoveredPlugins);
+        Assert.Contains(("fixture.good", PluginState.Removed), host.Events);
+    }
+
+    [Fact]
     public async Task The_data_directory_is_not_mistaken_for_a_plugin()
     {
         using var folder = new TestPluginsFolder();

@@ -37,6 +37,7 @@
     <ProjectReference Include="..\Fixtures\DependentPlugin\DependentPlugin.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Fixtures\ConflictPluginA\ConflictPluginA.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Fixtures\ConflictPluginB\ConflictPluginB.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Fixtures\HangingPlugin\HangingPlugin.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>
