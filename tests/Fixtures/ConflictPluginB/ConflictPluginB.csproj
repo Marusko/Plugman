@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Plugman.Contracts\Plugman.Contracts.csproj" Private="false" ExcludeAssets="runtime" />
+    <!-- Private (copied into the plugin folder) on purpose: this is the dependency that must
+         NOT be shared with the host or with the other plugin. -->
+    <ProjectReference Include="..\ConflictDepV2\ConflictDepV2.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="plugin.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

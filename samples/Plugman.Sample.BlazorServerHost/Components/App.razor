@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Plugman Blazor Server host</title>
+    <base href="/" />
+    <link rel="stylesheet" href="@Assets["app.css"]" />
+    <HeadOutlet />
+</head>
+<body>
+    @*
+        Global interactivity: the render-mode boundary sits here, on the host's own component.
+        Plugin components render INSIDE this boundary. Making a plugin component the boundary
+        itself would not work: Blazor serializes a boundary component's type by assembly name
+        for the circuit to re-resolve, which cannot find a type in a collectible load context.
+    *@
+    <Routes @rendermode="InteractiveServer" />
+    <script src="_framework/blazor.web.js"></script>
+</body>
+</html>

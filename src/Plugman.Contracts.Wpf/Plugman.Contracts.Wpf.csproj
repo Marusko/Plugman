@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!--
+      Windows-only by construction. This is precisely why the WPF capability is a separate
+      package: a console or Blazor host must never be forced to take a net10.0-windows
+      dependency just to use Plugman.
+    -->
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>Plugman.Contracts.Wpf</RootNamespace>
+    <Description>Optional WPF UI capability contract for Plugman plugins.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Plugman.Contracts\Plugman.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

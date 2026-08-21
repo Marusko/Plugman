@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <PluginDeployRoot>$(PluginsRoot)</PluginDeployRoot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Both contract references are compile-time only. PresentationFramework and friends come
+      from the host's WindowsDesktop framework, and Plugman.Contracts.Wpf must resolve from the
+      host too: if FrameworkElement or IWpfUiPlugin were loaded a second time in this plugin's
+      context, the host's cast of the returned view would throw InvalidCastException even
+      though the type names match.
+    -->
+    <ProjectReference Include="..\..\..\src\Plugman.Contracts\Plugman.Contracts.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime" />
+    <ProjectReference Include="..\..\..\src\Plugman.Contracts.Wpf\Plugman.Contracts.Wpf.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="plugin.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

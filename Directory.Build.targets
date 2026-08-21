@@ -1,0 +1,23 @@
+<Project>
+
+  <!--
+    Shared "publish this build output into a plugin folder" step.
+
+    A plugin is deployed as a self-contained *folder*: its own dll, its private
+    dependencies and its plugin.json manifest. Projects opt in by setting
+    PluginDeployRoot (sample plugins -> /plugins, test fixtures -> /artifacts/test-plugins).
+  -->
+  <Target Name="DeployPluginFolder" AfterTargets="Build" Condition="'$(PluginDeployRoot)' != ''">
+    <PropertyGroup>
+      <PluginDeployDir>$(PluginDeployRoot)$(MSBuildProjectName)\</PluginDeployDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <PluginDeployFile Include="$(TargetDir)**\*.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(PluginDeployFile)"
+          DestinationFiles="@(PluginDeployFile->'$(PluginDeployDir)%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+    <Message Importance="high" Text="Plugman: deployed $(MSBuildProjectName) -> $(PluginDeployDir)" />
+  </Target>
+
+</Project>

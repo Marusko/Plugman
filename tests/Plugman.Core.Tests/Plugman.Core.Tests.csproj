@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <!--
+      Server GC would make the collectible-load-context assertions flakier than they need to
+      be; workstation GC collects promptly under an explicit GC.Collect loop.
+    -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Plugman.Contracts\Plugman.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Plugman.Core\Plugman.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      Build-order only: the fixtures deploy themselves into /artifacts/test-plugins, and the
+      tests copy folders from there. ReferenceOutputAssembly=false keeps the fixture assemblies
+      out of the test binary's closure, which is essential — a fixture assembly already loaded
+      in the default context could never be tested for isolated loading.
+    -->
+    <ProjectReference Include="..\Fixtures\GoodPlugin\GoodPlugin.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Fixtures\ThrowingPlugin\ThrowingPlugin.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Fixtures\NotAPlugin\NotAPlugin.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Fixtures\DependentPlugin\DependentPlugin.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Fixtures\ConflictPluginA\ConflictPluginA.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Fixtures\ConflictPluginB\ConflictPluginB.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\TestPluginsFolder.cs" Link="TestPluginsFolder.cs" />
+    <Compile Include="..\Shared\TestHost.cs" Link="TestHost.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>

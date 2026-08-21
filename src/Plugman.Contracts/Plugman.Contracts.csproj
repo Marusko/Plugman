@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Plugman.Contracts</RootNamespace>
+    <Description>Framework-agnostic plugin contracts. Referenced by every host and every plugin. Deliberately free of any UI framework dependency.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      The only dependency of the contract surface. It travels with the contracts into
+      every plugin, which is why Plugman.Core treats it as an always-shared assembly:
+      ILogger must have one Type identity across the host and every load context.
+    -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <IsPackable>false</IsPackable>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Plugman.Contracts\Plugman.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Plugman.Core\Plugman.Core.csproj" />
+    <ProjectReference Include="..\..\src\Plugman.Contracts.Wpf\Plugman.Contracts.Wpf.csproj" />
+    <!-- Build-order only: the tests copy built plugin folders out of /plugins and /artifacts. -->
+    <ProjectReference Include="..\..\samples\Plugman.Sample.Plugins\SampleWpfPlugin\SampleWpfPlugin.csproj"
+                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Fixtures\WpfCodeViewPlugin\WpfCodeViewPlugin.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Fixtures\GoodPlugin\GoodPlugin.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\TestPluginsFolder.cs" Link="TestPluginsFolder.cs" />
+    <Compile Include="..\Shared\TestHost.cs" Link="TestHost.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>

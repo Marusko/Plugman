@@ -1,0 +1,34 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/Plugman.Sample.BlazorServerHost/Plugman.Sample.BlazorServerHost.csproj" />
+    <Project Path="samples/Plugman.Sample.ConsoleHost/Plugman.Sample.ConsoleHost.csproj" />
+    <Project Path="samples/Plugman.Sample.WpfHost/Plugman.Sample.WpfHost.csproj" />
+  </Folder>
+  <Folder Name="/samples/Plugman.Sample.Plugins/">
+    <Project Path="samples/Plugman.Sample.Plugins/SampleBlazorPlugin/SampleBlazorPlugin.csproj" />
+    <Project Path="samples/Plugman.Sample.Plugins/SampleLogicPlugin/SampleLogicPlugin.csproj" />
+    <Project Path="samples/Plugman.Sample.Plugins/SampleWpfPlugin/SampleWpfPlugin.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Plugman.Contracts.Blazor/Plugman.Contracts.Blazor.csproj" />
+    <Project Path="src/Plugman.Contracts.Wpf/Plugman.Contracts.Wpf.csproj" />
+    <Project Path="src/Plugman.Contracts/Plugman.Contracts.csproj" />
+    <Project Path="src/Plugman.Core/Plugman.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Plugman.Blazor.Tests/Plugman.Blazor.Tests.csproj" />
+    <Project Path="tests/Plugman.Core.Tests/Plugman.Core.Tests.csproj" />
+    <Project Path="tests/Plugman.Wpf.Tests/Plugman.Wpf.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/Fixtures/">
+    <Project Path="tests/Fixtures/ConflictDepV1/ConflictDepV1.csproj" />
+    <Project Path="tests/Fixtures/ConflictDepV2/ConflictDepV2.csproj" />
+    <Project Path="tests/Fixtures/ConflictPluginA/ConflictPluginA.csproj" />
+    <Project Path="tests/Fixtures/ConflictPluginB/ConflictPluginB.csproj" />
+    <Project Path="tests/Fixtures/DependentPlugin/DependentPlugin.csproj" />
+    <Project Path="tests/Fixtures/GoodPlugin/GoodPlugin.csproj" />
+    <Project Path="tests/Fixtures/NotAPlugin/NotAPlugin.csproj" />
+    <Project Path="tests/Fixtures/ThrowingPlugin/ThrowingPlugin.csproj" />
+    <Project Path="tests/Fixtures/WpfCodeViewPlugin/WpfCodeViewPlugin.csproj" />
+  </Folder>
+</Solution>

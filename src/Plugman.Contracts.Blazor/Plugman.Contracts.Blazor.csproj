@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Plugman.Contracts.Blazor</RootNamespace>
+    <Description>Optional Blazor UI capability contract for Plugman plugins.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      A package reference rather than a FrameworkReference to Microsoft.AspNetCore.App:
+      a Blazor plugin should be buildable without pulling the entire ASP.NET Core shared
+      framework into its own output. At runtime the host's shared framework wins, because
+      Microsoft.AspNetCore.Components is on the shared-assembly allow list.
+    -->
+    <PackageReference Include="Microsoft.AspNetCore.Components" Version="10.0.0" />
+    <ProjectReference Include="..\Plugman.Contracts\Plugman.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

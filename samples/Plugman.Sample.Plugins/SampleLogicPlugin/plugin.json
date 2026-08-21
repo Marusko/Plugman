@@ -1,0 +1,11 @@
+{
+  "id": "com.plugman.sample.logic",
+  "name": "Sample Logic Plugin",
+  "version": "1.0.0",
+  "description": "UI-free command plugin. Loads in any host.",
+  "author": "Plugman samples",
+  "entryAssembly": "SampleLogicPlugin.dll",
+  "entryType": "SampleLogicPlugin.SampleLogicPlugin",
+  "enabled": true,
+  "uiCapabilities": []
+}

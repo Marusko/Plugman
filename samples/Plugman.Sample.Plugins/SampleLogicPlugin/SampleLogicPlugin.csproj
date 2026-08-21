@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!--
+      EnableDynamicLoading is what turns a class library into a loadable plugin: it emits a
+      .deps.json and copies private dependencies next to the dll, which is exactly what
+      AssemblyDependencyResolver reads to resolve them out of the plugin folder.
+    -->
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <PluginDeployRoot>$(PluginsRoot)</PluginDeployRoot>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      A pure logic plugin references the core contracts and nothing else: no WPF, no Blazor.
+      Private=false / ExcludeAssets=runtime keeps Plugman.Contracts.dll out of the plugin
+      folder so it can only ever resolve from the host. Copying it here would give the plugin
+      a second IPlugin type identity and every cast in the manager would fail.
+    -->
+    <ProjectReference Include="..\..\..\src\Plugman.Contracts\Plugman.Contracts.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="plugin.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

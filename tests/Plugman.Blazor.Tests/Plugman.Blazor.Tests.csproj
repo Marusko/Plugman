@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The Blazor renderer used by these tests lives in the ASP.NET Core shared framework. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Plugman.Contracts\Plugman.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Plugman.Core\Plugman.Core.csproj" />
+    <ProjectReference Include="..\..\src\Plugman.Contracts.Blazor\Plugman.Contracts.Blazor.csproj" />
+    <ProjectReference Include="..\..\samples\Plugman.Sample.Plugins\SampleBlazorPlugin\SampleBlazorPlugin.csproj"
+                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Fixtures\GoodPlugin\GoodPlugin.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Shared\TestPluginsFolder.cs" Link="TestPluginsFolder.cs" />
+    <Compile Include="..\Shared\TestHost.cs" Link="TestHost.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+</Project>

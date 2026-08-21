@@ -1,0 +1,27 @@
+@* The plugin's Razor component. The host renders it through DynamicComponent without
+   compile-time knowledge of this type. It deliberately declares no @rendermode: it must
+   stay INSIDE the host's existing interactivity boundary, never be the boundary itself. *@
+
+<div style="border:1px solid #d0d7de;border-radius:6px;padding:16px">
+    <h3 style="margin-top:0">@Title</h3>
+
+    <p style="color:#555">
+        This markup was compiled into the plugin assembly and loaded from
+        <code>@AssemblyLocation</code> into its own collectible AssemblyLoadContext.
+    </p>
+
+    <button class="btn btn-primary" @onclick="Increment">Clicked @_count time(s)</button>
+</div>
+
+@code {
+    /// <summary>Supplied by the plugin through IBlazorUiPlugin.DefaultParameters.</summary>
+    [Parameter]
+    public string Title { get; set; } = "Sample Blazor Plugin";
+
+    private int _count;
+
+    private static string AssemblyLocation =>
+        Path.GetFileName(typeof(SamplePanel).Assembly.Location);
+
+    private void Increment() => _count++;
+}

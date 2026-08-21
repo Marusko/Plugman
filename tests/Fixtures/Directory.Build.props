@@ -1,0 +1,13 @@
+<Project>
+
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- Every fixture is a loadable plugin folder deployed under /artifacts/test-plugins. -->
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <PluginDeployRoot>$(TestPluginsRoot)</PluginDeployRoot>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Two projects, one assembly identity name, two versions: the private dependency that
+         two different plugins each carry their own copy of. -->
+    <AssemblyName>ConflictDep</AssemblyName>
+    <RootNamespace>ConflictDep</RootNamespace>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <EnableDynamicLoading>false</EnableDynamicLoading>
+    <PluginDeployRoot></PluginDeployRoot>
+  </PropertyGroup>
+
+</Project>

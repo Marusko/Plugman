@@ -1,0 +1,11 @@
+{
+  "id": "com.plugman.sample.blazor",
+  "name": "Sample Blazor Plugin",
+  "version": "1.0.0",
+  "description": "Ships a Razor component rendered by the host via DynamicComponent.",
+  "author": "Plugman samples",
+  "entryAssembly": "SampleBlazorPlugin.dll",
+  "entryType": "SampleBlazorPlugin.SampleBlazorPlugin",
+  "enabled": true,
+  "uiCapabilities": [ "blazor" ]
+}

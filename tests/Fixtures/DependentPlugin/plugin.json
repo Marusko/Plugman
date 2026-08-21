@@ -1,0 +1,7 @@
+{
+  "id": "fixture.dependent",
+  "entryAssembly": "DependentPlugin.dll",
+  "entryType": "DependentPlugin.DependentPlugin",
+  "enabled": true,
+  "dependencies": [ "fixture.good" ]
+}

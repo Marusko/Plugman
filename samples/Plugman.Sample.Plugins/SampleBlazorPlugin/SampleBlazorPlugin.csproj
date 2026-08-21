@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <PluginDeployRoot>$(PluginsRoot)</PluginDeployRoot>
+    <!--
+      No CSS isolation and no static web assets: a plugin folder is not served by the host's
+      static file middleware, so a scoped stylesheet would silently never load. Style from the
+      host's stylesheet or inline instead.
+    -->
+    <ScopedCssEnabled>false</ScopedCssEnabled>
+    <StaticWebAssetsEnabled>false</StaticWebAssetsEnabled>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Compile-time only, exactly as in the WPF plugin: the host owns the Blazor runtime. -->
+    <ProjectReference Include="..\..\..\src\Plugman.Contracts\Plugman.Contracts.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime" />
+    <ProjectReference Include="..\..\..\src\Plugman.Contracts.Blazor\Plugman.Contracts.Blazor.csproj"
+                      Private="false"
+                      ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="10.0.0" ExcludeAssets="runtime" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="plugin.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

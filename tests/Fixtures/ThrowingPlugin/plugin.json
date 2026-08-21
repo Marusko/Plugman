@@ -1,0 +1,6 @@
+{
+  "id": "fixture.throwing",
+  "entryAssembly": "ThrowingPlugin.dll",
+  "entryType": "ThrowingPlugin.ThrowingPlugin",
+  "enabled": true
+}

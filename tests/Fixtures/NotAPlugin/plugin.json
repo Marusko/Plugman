@@ -1,0 +1,6 @@
+{
+  "id": "fixture.notaplugin",
+  "entryAssembly": "NotAPlugin.dll",
+  "entryType": "NotAPlugin.JustAClass",
+  "enabled": true
+}

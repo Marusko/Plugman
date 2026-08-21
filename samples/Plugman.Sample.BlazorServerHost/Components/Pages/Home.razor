@@ -1,0 +1,138 @@
+@page "/"
+@inject PluginManager PluginManager
+
+<h2>Plugins</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Version</th>
+            <th>UI</th>
+            <th>State</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var plugin in _plugins)
+        {
+            <tr>
+                <td>
+                    <strong>@plugin.Metadata.Name</strong><br />
+                    <span class="muted">@plugin.Id</span>
+                    @if (plugin.LoadError is { } error)
+                    {
+                        <div class="error">@error.Message</div>
+                    }
+                </td>
+                <td>@plugin.Metadata.Version</td>
+                <td>@(plugin.UiCapabilities.Count == 0 ? "logic only" : string.Join("+", plugin.UiCapabilities))</td>
+                <td>@(plugin.IsEnabled ? "enabled" : "disabled") / @(plugin.IsLoaded ? "loaded" : "not loaded")</td>
+                <td>
+                    @if (plugin.IsEnabled)
+                    {
+                        <button @onclick="() => DisableAsync(plugin.Id)">Disable</button>
+                    }
+                    else
+                    {
+                        <button @onclick="() => EnableAsync(plugin.Id)">Enable</button>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<p>
+    <button @onclick="RescanAsync">Rescan plugins folder</button>
+    <span class="muted">Host capabilities: @string.Join(", ", PluginManager.HostUiCapabilities)</span>
+</p>
+
+@if (_status is { Length: > 0 })
+{
+    <p class="muted">@_status</p>
+}
+
+<h2>Plugin panels</h2>
+
+@if (_renderable.Count == 0)
+{
+    <p class="muted">No loaded plugin implements IBlazorUiPlugin.</p>
+}
+
+@foreach (var panel in _renderable)
+{
+    <section class="plugin-panel">
+        <h3>@panel.Title</h3>
+        @*
+            The host renders a component type it has never seen, from an assembly it never
+            referenced. DynamicComponent is the whole integration.
+        *@
+        <DynamicComponent Type="panel.ComponentType" Parameters="panel.Parameters" />
+    </section>
+}
+
+@code {
+    private IReadOnlyList<PluginDescriptor> _plugins = [];
+    private List<RenderablePlugin> _renderable = [];
+    private string? _status;
+
+    protected override void OnInitialized() => Refresh();
+
+    private async Task RescanAsync()
+    {
+        await PluginManager.ScanAsync();
+        await PluginManager.LoadEnabledAsync();
+        Refresh();
+    }
+
+    private async Task EnableAsync(string pluginId)
+    {
+        var descriptor = await PluginManager.EnableAsync(pluginId);
+        _status = descriptor.LoadError?.Message ?? $"{pluginId} enabled.";
+        Refresh();
+    }
+
+    private async Task DisableAsync(string pluginId)
+    {
+        // Drop the cached ComponentType before unloading: a live Type object roots the
+        // plugin's load context exactly like a live instance would.
+        _renderable = _renderable.Where(p => p.Id != pluginId).ToList();
+        StateHasChanged();
+
+        await PluginManager.DisableAsync(pluginId);
+        _status = $"{pluginId} disabled.";
+        Refresh();
+    }
+
+    private void Refresh()
+    {
+        _plugins = PluginManager.DiscoveredPlugins.OrderBy(p => p.Id, StringComparer.Ordinal).ToArray();
+
+        // Plugin code (the ComponentType property) runs behind the manager boundary, so a
+        // plugin that throws here degrades to "no panel" instead of a 500.
+        _renderable = _plugins
+            .Where(p => p.IsLoaded && p.UiCapabilities.Contains(PluginUiCapability.Blazor))
+            .Select(p => new
+            {
+                p.Id,
+                Title = PluginManager.TryInvoke<IBlazorUiPlugin, string>(p.Id, plugin => plugin.ViewTitle),
+                Type = PluginManager.TryInvoke<IBlazorUiPlugin, Type>(p.Id, plugin => plugin.ComponentType),
+                Parameters = PluginManager.TryInvoke<IBlazorUiPlugin, IReadOnlyDictionary<string, object?>?>(
+                    p.Id, plugin => plugin.DefaultParameters)
+            })
+            .Where(x => x.Type is { Success: true, Value: not null })
+            .Select(x => new RenderablePlugin(
+                x.Id,
+                x.Title.Value ?? x.Id,
+                x.Type.Value!,
+                x.Parameters.Value?.ToDictionary(kv => kv.Key, kv => kv.Value)))
+            .ToList();
+    }
+
+    private sealed record RenderablePlugin(
+        string Id,
+        string Title,
+        Type ComponentType,
+        IDictionary<string, object?>? Parameters);
+}

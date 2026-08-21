@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Plugman.Core</RootNamespace>
+    <Description>Plugin discovery, isolated loading/unloading and persistence. Host-framework agnostic: no WPF, no Blazor, no ASP.NET Core.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Deliberately the only project reference. Plugman.Core never references
+      Plugman.Contracts.Wpf or Plugman.Contracts.Blazor; it hands back IPlugin and lets the
+      host ask "does this also implement IWpfUiPlugin?" through GetPlugin&lt;T&gt;.
+      Enforced by a test that walks this assembly's referenced assemblies.
+    -->
+    <ProjectReference Include="..\Plugman.Contracts\Plugman.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Plugman.Core.Tests" />
+    <InternalsVisibleTo Include="Plugman.Wpf.Tests" />
+  </ItemGroup>
+
+</Project>

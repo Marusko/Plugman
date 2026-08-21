@@ -1,0 +1,6 @@
+{
+  "id": "fixture.conflict.b",
+  "entryAssembly": "ConflictPluginB.dll",
+  "entryType": "ConflictPluginB.ConflictPluginB",
+  "enabled": true
+}

@@ -1,0 +1,11 @@
+{
+  "id": "com.plugman.sample.wpf",
+  "name": "Sample WPF Plugin",
+  "version": "1.0.0",
+  "description": "Self-contained WPF panel with its own MVVM.",
+  "author": "Plugman samples",
+  "entryAssembly": "SampleWpfPlugin.dll",
+  "entryType": "SampleWpfPlugin.SampleWpfPlugin",
+  "enabled": true,
+  "uiCapabilities": [ "wpf" ]
+}

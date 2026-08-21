@@ -1,0 +1,7 @@
+{
+  "id": "fixture.wpf.codeview",
+  "entryAssembly": "WpfCodeViewPlugin.dll",
+  "entryType": "WpfCodeViewPlugin.WpfCodeViewPlugin",
+  "enabled": true,
+  "uiCapabilities": [ "wpf" ]
+}
