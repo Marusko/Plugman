@@ -97,6 +97,13 @@ public sealed class PluginManagerOptions
     public bool AutoLoadEnabledPlugins { get; set; }
 
     /// <summary>
+    /// How long <see cref="Contracts.IPlugin.InitializeAsync"/> gets before the manager gives up
+    /// on it. The call is made while the manager's lock is held, so without a timeout a plugin
+    /// that never returns would deadlock every later operation on the manager.
+    /// </summary>
+    public TimeSpan InitializeTimeout { get; set; } = TimeSpan.FromSeconds(30);
+
+    /// <summary>
     /// How long <see cref="Contracts.IPlugin.ShutdownAsync"/> gets before the manager stops
     /// waiting and unloads anyway. A plugin that hangs its shutdown must not hang the host.
     /// </summary>

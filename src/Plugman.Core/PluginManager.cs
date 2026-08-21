@@ -237,12 +237,28 @@ public sealed class PluginManager : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Reconciles the registry with what is actually on disk.
+    /// </summary>
+    /// <remarks>
+    /// A plugin that is still loaded is never dropped, however thoroughly its folder has
+    /// vanished: deleting a file does not un-run the code, and silently unloading on a
+    /// transient filesystem problem (a network share blinking, an antivirus lock) would be a
+    /// far worse failure than a stale row. It is flagged instead, so the host can say why the
+    /// plugin is still listed, and it is dropped as soon as it is unloaded.
+    /// </remarks>
     private void DropVanishedPlugins(HashSet<string> seen, List<PluginStateChangedEventArgs> events)
     {
         List<PluginRegistration> gone;
+        List<PluginRegistration> vanishedButLoaded;
+
         lock (_sync)
         {
-            gone = _plugins.Values.Where(p => !seen.Contains(p.Id) && !p.IsLoaded).ToList();
+            var missing = _plugins.Values.Where(p => !seen.Contains(p.Id)).ToList();
+
+            gone = missing.Where(p => !p.IsLoaded).ToList();
+            vanishedButLoaded = missing.Where(p => p.IsLoaded).ToList();
+
             foreach (var registration in gone)
                 _plugins.Remove(registration.Id);
         }
@@ -251,6 +267,23 @@ public sealed class PluginManager : IAsyncDisposable
         {
             _log.LogInformation("Plugin {Id} disappeared from disk; dropped from the registry.", registration.Id);
             events.Add(new PluginStateChangedEventArgs(registration.Id, PluginState.Removed, registration.ToDescriptor()));
+        }
+
+        foreach (var registration in vanishedButLoaded)
+        {
+            if (registration.LoadError?.Stage == PluginLoadStage.Manifest)
+                continue;
+
+            registration.LoadError = new PluginLoadError(
+                PluginLoadStage.Manifest,
+                $"The plugin folder {registration.FolderPath} no longer exists. The plugin is still loaded and " +
+                "keeps running; it will be dropped from the registry once it is unloaded.");
+
+            _log.LogWarning(
+                "Plugin {Id} disappeared from disk but is still loaded; keeping it until it is unloaded.",
+                registration.Id);
+
+            events.Add(new PluginStateChangedEventArgs(registration.Id, PluginState.Failed, registration.ToDescriptor()));
         }
     }
 
@@ -597,11 +630,44 @@ public sealed class PluginManager : IAsyncDisposable
 
         registration.Context = pluginContext;
 
+        return await RunLifecycleCallAsync(
+            registration,
+            token => instance.InitializeAsync(pluginContext, token),
+            _options.InitializeTimeout,
+            PluginLoadStage.Initialize,
+            nameof(IPlugin.InitializeAsync),
+            ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Runs one plugin lifecycle call with a timeout that holds even when the plugin never
+    /// returns.
+    /// </summary>
+    /// <remarks>
+    /// The token is cancelled at the timeout, which is enough for a well-behaved plugin. A
+    /// plugin that ignores its <see cref="CancellationToken"/> — or blocks a thread outright —
+    /// cannot be stopped: .NET has no safe way to abort it. So after a short grace period the
+    /// call is <em>abandoned</em> rather than waited on. The manager releases its lock and the
+    /// host keeps running; the plugin's task is left to finish on its own, and its load context
+    /// stays alive until it does. Blocking forever instead would deadlock every later operation
+    /// on this manager, which is strictly worse.
+    /// </remarks>
+    private async Task<PluginLoadError?> RunLifecycleCallAsync(
+        PluginRegistration registration,
+        Func<CancellationToken, Task> call,
+        TimeSpan timeout,
+        PluginLoadStage stage,
+        string operation,
+        CancellationToken ct)
+    {
+        using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        timeoutSource.CancelAfter(timeout);
+
+        Task pluginTask;
         try
         {
-            using var scope = context.EnterContextualReflection();
-            await instance.InitializeAsync(pluginContext, ct).ConfigureAwait(false);
-            return null;
+            using var scope = registration.LoadContext!.EnterContextualReflection();
+            pluginTask = call(timeoutSource.Token) ?? Task.CompletedTask;
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
@@ -609,8 +675,55 @@ public sealed class PluginManager : IAsyncDisposable
         }
         catch (Exception ex)
         {
-            _log.LogError(ex, "Plugin {Id} threw from InitializeAsync.", registration.Id);
-            return PluginLoadError.FromException(PluginLoadStage.Initialize, "InitializeAsync threw.", ex);
+            // A plugin that throws synchronously never returns a task.
+            _log.LogError(ex, "Plugin {Id} threw from {Operation}.", registration.Id, operation);
+            return PluginLoadError.FromException(stage, $"{operation} threw.", ex);
+        }
+
+        // The grace period lets a cooperative plugin observe the cancelled token and wind down
+        // before we give up on it.
+        var abandonAfter = timeout + TimeSpan.FromSeconds(2);
+        var finished = await Task.WhenAny(pluginTask, Task.Delay(abandonAfter, CancellationToken.None))
+            .ConfigureAwait(false);
+
+        if (!ReferenceEquals(finished, pluginTask))
+        {
+            // Make sure a later failure on the abandoned task is not an unobserved exception.
+            _ = pluginTask.ContinueWith(
+                t => _ = t.Exception,
+                CancellationToken.None,
+                TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
+
+            _log.LogError(
+                "Plugin {Id} did not return from {Operation} within {Timeout} and ignored cancellation; " +
+                "abandoning the call. Its load context cannot be collected until it finishes.",
+                registration.Id, operation, abandonAfter);
+
+            return new PluginLoadError(
+                stage,
+                $"{operation} did not complete within {abandonAfter.TotalSeconds:0.#}s and did not observe " +
+                "cancellation. The call was abandoned so the host could continue.");
+        }
+
+        try
+        {
+            await pluginTask.ConfigureAwait(false);
+            return null;
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (OperationCanceledException)
+        {
+            _log.LogError("Plugin {Id} cancelled {Operation} after the {Timeout} timeout.", registration.Id, operation, timeout);
+            return new PluginLoadError(stage, $"{operation} timed out after {timeout.TotalSeconds:0.#}s.");
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(ex, "Plugin {Id} threw from {Operation}.", registration.Id, operation);
+            return PluginLoadError.FromException(stage, $"{operation} threw.", ex);
         }
     }
 
@@ -654,20 +767,17 @@ public sealed class PluginManager : IAsyncDisposable
         if (instance is null)
             return;
 
-        try
-        {
-            using var scope = registration.LoadContext!.EnterContextualReflection();
-            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct);
-            timeout.CancelAfter(_options.ShutdownTimeout);
+        // A failed shutdown never blocks the unload: it is recorded and we carry on.
+        var error = await RunLifecycleCallAsync(
+            registration,
+            instance.ShutdownAsync,
+            _options.ShutdownTimeout,
+            PluginLoadStage.Shutdown,
+            nameof(IPlugin.ShutdownAsync),
+            ct).ConfigureAwait(false);
 
-            await instance.ShutdownAsync(timeout.Token).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            // Never let a bad shutdown block the unload; record it and carry on.
-            _log.LogError(ex, "Plugin {Id} threw from ShutdownAsync; unloading anyway.", registration.Id);
-            registration.LoadError = PluginLoadError.FromException(PluginLoadStage.Shutdown, "ShutdownAsync threw.", ex);
-        }
+        if (error is not null)
+            registration.LoadError = error;
     }
 
     /// <summary>
