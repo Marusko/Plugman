@@ -30,8 +30,10 @@ public partial class MainWindow : Window
             .BuildServiceProvider();
 
         _manager = new PluginManager(SamplePaths.ResolvePluginsRoot(), services, _loggerFactory);
+        // Events arrive on whatever thread the manager finished the operation on, so they have
+        // to be marshalled onto the UI thread.
         _manager.PluginStateChanged += (_, e) =>
-            Dispatcher.BeginInvoke(() => StatusText.Text = $"{e.PluginId}: {e.State}");
+            Dispatcher.BeginInvoke(() => EventText.Text = $"last event: {e.PluginId} → {e.State}");
 
         PluginList.ItemsSource = _rows;
 
@@ -81,12 +83,16 @@ public partial class MainWindow : Window
 
         await _manager.DisableAsync(pluginId);
 
+        // Refresh before the unload check, not after: verifying collection can take seconds
+        // (it is a GC loop with a timeout), and the list must not sit there claiming the plugin
+        // is still loaded while that runs.
+        Refresh();
+        StatusText.Text = $"{pluginId} disabled; checking whether its load context is collected...";
+
         var collected = await _manager.WaitForUnloadAsync(pluginId, TimeSpan.FromSeconds(5));
         StatusText.Text = collected
             ? $"{pluginId} disabled; load context collected."
-            : $"{pluginId} disabled, but its load context is still alive — something still references it.";
-
-        Refresh();
+            : $"{pluginId} disabled, but its load context is still alive — WPF pins any assembly it has loaded XAML from.";
     }
 
     private void Refresh()
@@ -141,7 +147,7 @@ public partial class MainWindow : Window
 
         if (!view.Success || view.Value is null)
         {
-            PluginTabs.Items.Add(new TabItem
+            AddTabItem(new TabItem
             {
                 Header = title.Value ?? pluginId,
                 Tag = pluginId,
@@ -158,12 +164,29 @@ public partial class MainWindow : Window
         // The cast the acceptance criteria care about: view.Value is a FrameworkElement built
         // inside the plugin's load context, and it drops straight into the host's visual tree.
         // That only works because PresentationFramework resolved from the host for both of us.
-        PluginTabs.Items.Add(new TabItem
+        AddTabItem(new TabItem
         {
             Header = title.Value ?? pluginId,
             Tag = pluginId,
             Content = view.Value
         });
+    }
+
+    /// <summary>
+    /// Adds a tab and makes sure something is selected.
+    /// </summary>
+    /// <remarks>
+    /// The explicit selection is not optional. A TabControl populated at runtime keeps
+    /// SelectedIndex at -1, and an unselected tab's content is never realized: the plugin's
+    /// view sits in the item with IsVisible false and a zero size, so the panel renders blank
+    /// while the tab header looks perfectly normal.
+    /// </remarks>
+    private void AddTabItem(TabItem tab)
+    {
+        PluginTabs.Items.Add(tab);
+
+        if (PluginTabs.SelectedIndex < 0)
+            PluginTabs.SelectedItem = tab;
     }
 
     private void RemoveTab(string pluginId)
@@ -176,6 +199,11 @@ public partial class MainWindow : Window
             tab.Content = null;
             PluginTabs.Items.Remove(tab);
         }
+
+        // Removing the selected tab leaves the control with nothing selected, which would make
+        // the next remaining panel render blank for the same reason as above.
+        if (PluginTabs.SelectedIndex < 0 && PluginTabs.Items.Count > 0)
+            PluginTabs.SelectedIndex = 0;
     }
 
     private async void OnClosed(object? sender, EventArgs e)

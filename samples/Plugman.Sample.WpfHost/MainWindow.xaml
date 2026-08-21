@@ -9,6 +9,14 @@
             <StatusBarItem>
                 <TextBlock x:Name="StatusText" Text="Starting..." />
             </StatusBarItem>
+            <!--
+                Lifecycle events get their own slot. Sharing one field with the host's own
+                messages means whichever dispatcher callback lands last wins, and the message
+                the user is waiting for flickers away.
+            -->
+            <StatusBarItem HorizontalAlignment="Right">
+                <TextBlock x:Name="EventText" Foreground="#666" />
+            </StatusBarItem>
         </StatusBar>
 
         <Border DockPanel.Dock="Left" Width="330" BorderBrush="#DDD" BorderThickness="0,0,1,0">
